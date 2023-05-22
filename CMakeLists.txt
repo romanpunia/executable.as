@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.6)
-set(VI_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/mavi CACHE STRING "Mavi directory")
+set(VI_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/mavi.as/deps/mavi CACHE STRING "Mavi directory")
 set(VI_USE_JIT {{BUILDER_USE_JIT}} CACHE BOOL "---")
 set(VI_USE_SIMD {{BUILDER_USE_SIMD}} CACHE BOOL "---")
 set(VI_USE_FAST_MEMORY {{BUILDER_USE_FAST_MEMORY}} CACHE BOOL "---")
