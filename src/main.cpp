@@ -1,5 +1,5 @@
 #include "runtime.h"
-#include "program.h"
+#include "program.hpp"
 
 int main(int argc, char* argv[])
 {
@@ -10,42 +10,30 @@ int main(int argc, char* argv[])
 	ProgramContext Contextual(argc, argv);
 	Contextual.Path = argc > 0 ? argv[0] : "";
 	Contextual.Module = OS::Path::GetFilename(Contextual.Path.c_str());
-	Contextual.Program = Codec::HexDecode(GetProgramByteCode());
+#ifdef HAS_PROGRAM_HEX
+    program_hex::foreach(&Contextual, [](void* Context, const char* Buffer, unsigned Size)
+    {
+        ProgramContext* Contextual = (ProgramContext*)Context;
+	    Contextual.Program = Codec::HexDecode(Buffer, (size_t)Size);
+    });
+#else
+    return -1;
+#endif
+    Vector<std::pair<uint32_t, size_t>> Settings = { {{BUILDER_CONFIG_SETTINGS}}};
 	ProgramEntrypoint Entrypoint;
 	ProgramConfig Config;
-	Config.Symbols =
-	{
-		{{CONFIG_SYMBOLS}}
-	};
-	Config.Submodules
-	{
-		{{CONFIG_SUBMODULES}}
-	};
-	Config.Addons
-	{
-		{{CONFIG_ADDONS}}
-	};
-	Config.Libraries
-	{
-		{{CONFIG_LIBRARIES}}
-	};
-	Config.Settings =
-	{
-		{{CONFIG_SETTINGS}}
-	};
-	Config.Modules = {{CONFIG_MODULES}};
-	Config.CLibraries = {{CONFIG_CLIBRARIES}};
-	Config.CSymbols = {{CONFIG_CSYMBOLS}};
-	Config.Files = {{CONFIG_CFILES}};
-	Config.JSON = {{CONFIG_JSON}};
-	Config.Remotes = {{CONFIG_REMOTES}};
-	Config.Debug = {{CONFIG_DEBUG}};
-	Config.Translator = {{CONFIG_TRANSLATOR}};
-	Config.Interactive = {{CONFIG_INTERACTIVE}};
-	Config.EssentialsOnly = {{CONFIG_ESSENTIALS_ONLY}};
-	Config.LoadByteCode = {{CONFIG_LOAD_BYTE_CODE}};
-	Config.SaveByteCode = {{CONFIG_SAVE_BYTE_CODE}};
-	Config.SaveSourceCode = {{CONFIG_SAVE_SOURCE_CODE}};
+	Config.Symbols = { {{BUILDER_CONFIG_SYMBOLS}}};
+	Config.Submodules = { {{BUILDER_CONFIG_SUBMODULES}}};
+	Config.Addons = { {{BUILDER_CONFIG_ADDONS}}};
+	Config.Libraries = { {{BUILDER_CONFIG_LIBRARIES}}};
+	Config.Modules = {{BUILDER_CONFIG_MODULES}};
+	Config.CLibraries = {{BUILDER_CONFIG_CLIBRARIES}};
+	Config.CSymbols = {{BUILDER_CONFIG_CSYMBOLS}};
+	Config.Files = {{BUILDER_CONFIG_FILES}};
+	Config.JSON = {{BUILDER_CONFIG_JSON}};
+	Config.Remotes = {{BUILDER_CONFIG_REMOTES}};
+	Config.Translator = {{BUILDER_CONFIG_TRANSLATOR}};
+	Config.EssentialsOnly = {{BUILDER_CONFIG_ESSENTIALS_ONLY}};
 
 	Mavi::Initialize(Config.EssentialsOnly ? (size_t)Mavi::Preset::App : (size_t)Mavi::Preset::Game);
 	{
@@ -55,6 +43,9 @@ int main(int argc, char* argv[])
 		Queue = Schedule::Get();
 		Queue->SetImmediate(true);
 		Multiplexer::Create();
+
+        for (auto& Item : Settings)
+            VM->SetProperty((Features)Item.first, Item.second);
 
 		ExitCode = ConfigureEngine(Config, Contextual, VM);
 		if (ExitCode != 0)

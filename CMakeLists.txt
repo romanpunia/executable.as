@@ -1,19 +1,22 @@
 cmake_minimum_required(VERSION 3.6)
 set(VI_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/mavi CACHE STRING "Mavi directory")
-set(VI_USE_JIT {{USE_JIT}} CACHE BOOL "JIT can be used")
-set(VI_USE_SIMD {{USE_SIMD}} CACHE BOOL "SIMD is preferred")
+set(VI_USE_JIT {{BUILDER_USE_JIT}} CACHE BOOL "---")
+set(VI_USE_SIMD {{BUILDER_USE_SIMD}} CACHE BOOL "---")
+set(VI_USE_FAST_MEMORY {{BUILDER_USE_FAST_MEMORY}} CACHE BOOL "---")
 include(${VI_DIRECTORY}/lib/toolchain.cmake)
-project({{PROJECT_NAME}})
+project({{BUILDER_OUTPUT}})
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/../bin)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR}/../bin)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR}/../bin)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${CMAKE_SOURCE_DIR}/../bin)
-add_executable({{PROJECT_NAME}}
+include(lib/program.cmake)
+add_executable({{BUILDER_OUTPUT}}
     ${CMAKE_CURRENT_SOURCE_DIR}/deps/mavi.as/src/runtime.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/deps/mavi.as/src/runtime.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
-set_target_properties({{PROJECT_NAME}} PROPERTIES
-		OUTPUT_NAME "vi"
+set_target_properties({{BUILDER_OUTPUT}} PROPERTIES
+		OUTPUT_NAME "{{BUILDER_OUTPUT}}"
 		CXX_STANDARD ${VI_CXX}
         CXX_STANDARD_REQUIRED ON
 		CXX_EXTENSIONS OFF
@@ -24,5 +27,5 @@ if (MSVC)
 endif()
 add_subdirectory(${VI_DIRECTORY} mavi)
 link_directories(${VI_DIRECTORY})
-target_include_directories({{PROJECT_NAME}} PRIVATE ${VI_DIRECTORY})
-target_link_libraries({{PROJECT_NAME}} PRIVATE mavi)
+target_include_directories({{BUILDER_OUTPUT}} PRIVATE ${VI_DIRECTORY})
+target_link_libraries({{BUILDER_OUTPUT}} PRIVATE mavi)
