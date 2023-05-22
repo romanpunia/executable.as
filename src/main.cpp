@@ -1,4 +1,4 @@
-#include "runtime.h"
+#include "../deps/mavi.as/src/runtime.h"
 #include "program.hpp"
 
 int main(int argc, char* argv[])
@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
     program_hex::foreach(&Contextual, [](void* Context, const char* Buffer, unsigned Size)
     {
         ProgramContext* Contextual = (ProgramContext*)Context;
-	    Contextual.Program = Codec::HexDecode(Buffer, (size_t)Size);
+	    Contextual->Program = Codec::HexDecode(Buffer, (size_t)Size);
     });
 #else
     return -1;
