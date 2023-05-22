@@ -13,7 +13,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${CMAKE_SOURCE_DIR}/../bin)
 include(lib/program.cmake)
 add_executable({{BUILDER_OUTPUT}}
     ${CMAKE_CURRENT_SOURCE_DIR}/deps/mavi.as/src/runtime.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/deps/mavi.as/src/runtime.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/program.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
 set_target_properties({{BUILDER_OUTPUT}} PROPERTIES
 		OUTPUT_NAME "{{BUILDER_OUTPUT}}"
