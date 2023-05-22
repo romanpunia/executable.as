@@ -10,7 +10,7 @@ int main(int argc, char* argv[])
 	ProgramContext Contextual(argc, argv);
 	Contextual.Path = argc > 0 ? argv[0] : "";
 	Contextual.Module = OS::Path::GetFilename(Contextual.Path.c_str());
-	Contextual.Program = GetProgramByteCode();
+	Contextual.Program = Codec::HexDecode(GetProgramByteCode());
 	ProgramEntrypoint Entrypoint;
 	ProgramConfig Config;
 	Config.Symbols =
