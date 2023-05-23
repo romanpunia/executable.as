@@ -1,6 +1,22 @@
 #include "../deps/mavi.as/src/runtime.h"
 #include "program.hpp"
+#include <signal.h>
 
+void exit(int sigv)
+{
+    auto* App = Application::Get();
+    if (!App || App->GetState() != ApplicationState::Active)
+    {
+        auto* Queue = Schedule::Get();
+        if (Queue->IsActive())
+            Queue->Stop();
+        else
+            std::exit(0);        
+    }
+    else
+        App->Stop();
+    signal(sigv, &exit);
+}
 int main(int argc, char* argv[])
 {
 	int ExitCode = 0;
@@ -26,13 +42,18 @@ int main(int argc, char* argv[])
 	Config.Functions = { {{BUILDER_CONFIG_FUNCTIONS}} };
 	Config.SystemAddons = { {{BUILDER_CONFIG_ADDONS}} };
 	Config.CLibraries = {{BUILDER_CONFIG_CLIBRARIES}};
-	Config.CSymbols = {{BUILDER_CONFIG_CSYMBOLS}};
+	Config.CFunctions = {{BUILDER_CONFIG_CFUNCTIONS}};
 	Config.Addons = {{BUILDER_CONFIG_SYSTEM_ADDONS}};
 	Config.Files = {{BUILDER_CONFIG_FILES}};
 	Config.Remotes = {{BUILDER_CONFIG_REMOTES}};
 	Config.Translator = {{BUILDER_CONFIG_TRANSLATOR}};
 	Config.EssentialsOnly = {{BUILDER_CONFIG_ESSENTIALS_ONLY}};
-
+    signal(SIGINT, &exit);
+    signal(SIGTERM, &exit);
+#ifdef VI_UNIX
+    signal(SIGPIPE, SIG_IGN);
+    signal(SIGCHLD, SIG_IGN);
+#endif
 	Mavi::Initialize(Config.EssentialsOnly ? (size_t)Mavi::Preset::App : (size_t)Mavi::Preset::Game);
 	{
 		VM = new VirtualMachine();
