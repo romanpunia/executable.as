@@ -4,18 +4,21 @@
 
 void exit(int sigv)
 {
-    auto* App = Application::Get();
-    if (!App || App->GetState() != ApplicationState::Active)
-    {
-        auto* Queue = Schedule::Get();
-        if (Queue->IsActive())
-            Queue->Stop();
-        else
-            std::exit(0);        
-    }
-    else
-        App->Stop();
-    signal(sigv, &exit);
+	if (sigv == SIGINT || sigv == SIGTERM)
+	{
+		auto* App = Application::Get();
+		if (!App || App->GetState() != ApplicationState::Active)
+		{
+			auto* Queue = Schedule::Get();
+			if (Queue->IsActive())
+				Queue->Stop();
+			else
+				std::exit(0);        
+		}
+		else
+			App->Stop();
+		signal(sigv, &stop);
+	}
 }
 int main(int argc, char* argv[])
 {
