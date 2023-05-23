@@ -100,7 +100,7 @@ int main(int argc, char* argv[])
 		});
 
 		TypeInfo Type = VM->GetTypeInfoByDecl("array<string>@");
-		Bindings::Array* ArgsArray = Bindings::Array::Compose<String>(Type.GetTypeInfo(), Contextual.Args);
+		Bindings::Array* ArgsArray = Type.IsValid() ? Bindings::Array::Compose<String>(Type.GetTypeInfo(), Contextual.Args) : nullptr;
 		Context->Execute(Main, [&Main, ArgsArray](ImmediateContext* Context)
 		{
 			if (Main.GetArgsCount() > 0)
@@ -108,8 +108,10 @@ int main(int argc, char* argv[])
 		}).Wait();
 
 		int ExitCode = Main.GetReturnTypeId() == (int)TypeId::VOIDF ? 0 : (int)Context->GetReturnDWord();
-		VM->ReleaseObject(ArgsArray, Type);
-		AwaitContext(Queue, VM, Context);
+        if (ArgsArray != nullptr)
+    		VM->ReleaseObject(ArgsArray, Type);
+	
+    	AwaitContext(Queue, VM, Context);
 		return ExitCode;
 	}
 FinishProgram:
