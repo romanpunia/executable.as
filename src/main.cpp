@@ -2,7 +2,7 @@
 #include "program.hpp"
 #include <signal.h>
 
-void exit(int sigv)
+void stop(int sigv)
 {
 	if (sigv == SIGINT || sigv == SIGTERM)
 	{
@@ -51,8 +51,8 @@ int main(int argc, char* argv[])
 	Config.Remotes = {{BUILDER_CONFIG_REMOTES}};
 	Config.Translator = {{BUILDER_CONFIG_TRANSLATOR}};
 	Config.EssentialsOnly = {{BUILDER_CONFIG_ESSENTIALS_ONLY}};
-    signal(SIGINT, &exit);
-    signal(SIGTERM, &exit);
+    signal(SIGINT, &stop);
+    signal(SIGTERM, &stop);
 #ifdef VI_UNIX
     signal(SIGPIPE, SIG_IGN);
     signal(SIGCHLD, SIG_IGN);
