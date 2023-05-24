@@ -27,8 +27,8 @@ int main(int argc, char* argv[])
 	VirtualMachine* VM;
 	Compiler* Unit;
 	ProgramContext Contextual(argc, argv);
-	Contextual.Path = argc > 0 ? argv[0] : "";
-	Contextual.Module = OS::Path::GetFilename(Contextual.Path.c_str());
+	Contextual.Path = OS::Directory::GetModule();
+	Contextual.Module = argc > 0 ? argv[0] : "runtime";
 #ifdef HAS_PROGRAM_HEX
     program_hex::foreach(&Contextual, [](void* Context, const char* Buffer, unsigned Size)
     {
@@ -51,6 +51,7 @@ int main(int argc, char* argv[])
 	Config.Remotes = {{BUILDER_CONFIG_REMOTES}};
 	Config.Translator = {{BUILDER_CONFIG_TRANSLATOR}};
 	Config.EssentialsOnly = {{BUILDER_CONFIG_ESSENTIALS_ONLY}};
+    OS::Directory::SetWorking(Contextual.Path.c_str());
     signal(SIGINT, &stop);
     signal(SIGTERM, &stop);
 #ifdef VI_UNIX
