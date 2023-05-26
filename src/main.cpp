@@ -2,23 +2,37 @@
 #include "program.hpp"
 #include <signal.h>
 
+Function Terminate = nullptr;
+
 void stop(int sigv)
 {
-	if (sigv == SIGINT || sigv == SIGTERM)
-	{
-		auto* App = Application::Get();
-		if (!App || App->GetState() != ApplicationState::Active)
-		{
-			auto* Queue = Schedule::Get();
-			if (Queue->IsActive())
-				Queue->Stop();
-			else
-				std::exit(0);        
-		}
-		else
-			App->Stop();
-		signal(sigv, &stop);
-	}
+	if (sigv != SIGINT && sigv != SIGTERM)
+        return;
+    {
+        if (Terminate.IsValid() && Unit->GetContext()->Execute(Terminate, nullptr).Get() == 0)
+        {
+            Terminate = nullptr;
+            goto GracefulShutdown;
+        }
+
+        auto* App = Application::Get();
+        if (App != nullptr && App->GetState() == ApplicationState::Active)
+        {
+            App->Stop();
+            goto GracefulShutdown;
+        }
+
+        auto* Queue = Schedule::Get();
+        if (Queue->IsActive())
+        {
+            Queue->Stop();
+            goto GracefulShutdown;
+        }
+
+        return std::exit(JUMP_CODE + EXIT_KILL);
+    }
+GracefulShutdown:
+    signal(sigv, &stop);
 }
 int main(int argc, char* argv[])
 {
@@ -99,6 +113,7 @@ int main(int argc, char* argv[])
 			if (!Context->WillExceptionBeCaught())
 				std::exit(JUMP_CODE + EXIT_RUNTIME_FAILURE);
 		});
+		Terminate = Unit->GetModule().GetFunctionByDecl(Entrypoint.Terminate);
 
 		TypeInfo Type = VM->GetTypeInfoByDecl("array<string>@");
 		Bindings::Array* ArgsArray = Type.IsValid() ? Bindings::Array::Compose<String>(Type.GetTypeInfo(), Contextual.Args) : nullptr;
