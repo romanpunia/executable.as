@@ -3,13 +3,14 @@
 #include <signal.h>
 
 Function Terminate = nullptr;
+ImmediateContext* Context;
 
 void stop(int sigv)
 {
 	if (sigv != SIGINT && sigv != SIGTERM)
         return;
     {
-        if (Terminate.IsValid() && Unit->GetContext()->Execute(Terminate, nullptr).Get() == 0)
+        if (Terminate.IsValid() && FunctionDelegate(Terminate, Context)(nullptr).Get() == 0)
         {
             Terminate = nullptr;
             goto GracefulShutdown;
@@ -52,7 +53,7 @@ int main(int argc, char* argv[])
 #else
     return -1;
 #endif
-    Vector<std::pair<uint32_t, size_t>> Settings = { {{BUILDER_CONFIG_SETTINGS}}};
+    Vector<std::pair<uint32_t, size_t>> Settings = { {{BUILDER_CONFIG_SETTINGS}} };
 	ProgramEntrypoint Entrypoint;
 	ProgramConfig Config;
 	Config.Libraries = { {{BUILDER_CONFIG_LIBRARIES}} };
@@ -76,6 +77,7 @@ int main(int argc, char* argv[])
 	{
 		VM = new VirtualMachine();
 		Unit = VM->CreateCompiler();
+        Context = VM->RequestContext();
 
 		Queue = Schedule::Get();
 		Queue->SetImmediate(true);
@@ -92,7 +94,8 @@ int main(int argc, char* argv[])
 		if (Unit->Prepare(Contextual.Module) < 0)
 		{
 			VI_ERR("cannot prepare <%s> module scope", Contextual.Module);
-			return JUMP_CODE + EXIT_PREPARE_FAILURE;
+			ExitCode = JUMP_CODE + EXIT_PREPARE_FAILURE;
+			goto FinishProgram;
 		}
 
 		ByteCodeInfo Info;
@@ -100,14 +103,17 @@ int main(int argc, char* argv[])
 		if (Unit->LoadByteCode(&Info).Get() < 0)
 		{
 			VI_ERR("cannot load <%s> module bytecode", Contextual.Module);
-			return JUMP_CODE + EXIT_LOADING_FAILURE;
+			ExitCode = JUMP_CODE + EXIT_LOADING_FAILURE;
+			goto FinishProgram;
 		}
 
 		Function Main = GetEntrypoint(Contextual, Entrypoint, Unit);
 		if (!Main.IsValid())
-			return JUMP_CODE + EXIT_ENTRYPOINT_FAILURE;
+        {
+			ExitCode = JUMP_CODE + EXIT_ENTRYPOINT_FAILURE;
+			goto FinishProgram;
+        }
 
-		ImmediateContext* Context = Unit->GetContext();
 		Context->SetExceptionCallback([](ImmediateContext* Context)
 		{
 			if (!Context->WillExceptionBeCaught())
@@ -117,7 +123,7 @@ int main(int argc, char* argv[])
 
 		TypeInfo Type = VM->GetTypeInfoByDecl("array<string>@");
 		Bindings::Array* ArgsArray = Type.IsValid() ? Bindings::Array::Compose<String>(Type.GetTypeInfo(), Contextual.Args) : nullptr;
-		Context->Execute(Main, [&Main, ArgsArray](ImmediateContext* Context)
+		Context->ExecuteCall(Main, [&Main, ArgsArray](ImmediateContext* Context)
 		{
 			if (Main.GetArgsCount() > 0)
 				Context->SetArgObject(0, ArgsArray);
@@ -126,11 +132,10 @@ int main(int argc, char* argv[])
 		int ExitCode = Main.GetReturnTypeId() == (int)TypeId::VOIDF ? 0 : (int)Context->GetReturnDWord();
         if (ArgsArray != nullptr)
     		VM->ReleaseObject(ArgsArray, Type);
-	
     	AwaitContext(Queue, VM, Context);
-		return ExitCode;
 	}
 FinishProgram:
+	VI_RELEASE(Context);
 	VI_RELEASE(Unit);
 	VI_RELEASE(VM);
 	Mavi::Uninitialize();
