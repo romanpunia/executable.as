@@ -49,7 +49,7 @@ void setup_program(ProgramContext& Contextual)
     signal(SIGCHLD, SIG_IGN);
 #endif
 }
-bool load_program()
+bool load_program(ProgramContext& Contextual)
 {
 #ifdef HAS_PROGRAM_HEX
     program_hex::foreach(&Contextual, [](void* Context, const char* Buffer, unsigned Size)
@@ -67,7 +67,7 @@ int main(int argc, char* argv[])
 	ProgramContext Contextual(argc, argv);
 	Contextual.Path = OS::Directory::GetModule();
 	Contextual.Module = argc > 0 ? argv[0] : "runtime";
-    if (!load_program())
+    if (!load_program(Contextual))
         return 0;
 
 	ProgramConfig Config;
