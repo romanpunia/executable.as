@@ -3,9 +3,13 @@
 #include <signal.h>
 
 Function Terminate = nullptr;
-ImmediateContext* Context;
+VirtualMachine* VM = nullptr;
+Compiler* Unit = nullptr;
+ImmediateContext* Context = nullptr;
+Schedule* Queue = nullptr;
+int ExitCode = 0;
 
-void stop(int sigv)
+void exit_program(int sigv)
 {
 	if (sigv != SIGINT && sigv != SIGTERM)
         return;
@@ -33,28 +37,39 @@ void stop(int sigv)
         return std::exit(JUMP_CODE + EXIT_KILL);
     }
 GracefulShutdown:
-    signal(sigv, &stop);
+    signal(sigv, &exit_program);
 }
-int main(int argc, char* argv[])
+void setup_program(ProgramContext& Contextual)
 {
-	int ExitCode = 0;
-	Schedule* Queue;
-	VirtualMachine* VM;
-	Compiler* Unit;
-	ProgramContext Contextual(argc, argv);
-	Contextual.Path = OS::Directory::GetModule();
-	Contextual.Module = argc > 0 ? argv[0] : "runtime";
+    OS::Directory::SetWorking(Contextual.Path.c_str());
+    signal(SIGINT, &exit_program);
+    signal(SIGTERM, &exit_program);
+#ifdef VI_UNIX
+    signal(SIGPIPE, SIG_IGN);
+    signal(SIGCHLD, SIG_IGN);
+#endif
+}
+bool load_program()
+{
 #ifdef HAS_PROGRAM_HEX
     program_hex::foreach(&Contextual, [](void* Context, const char* Buffer, unsigned Size)
     {
         ProgramContext* Contextual = (ProgramContext*)Context;
 	    Contextual->Program = Codec::HexDecode(Buffer, (size_t)Size);
     });
+    return true;
 #else
-    return -1;
+    return false;
 #endif
-    Vector<std::pair<uint32_t, size_t>> Settings = { {{BUILDER_CONFIG_SETTINGS}} };
-	ProgramEntrypoint Entrypoint;
+}
+int main(int argc, char* argv[])
+{
+	ProgramContext Contextual(argc, argv);
+	Contextual.Path = OS::Directory::GetModule();
+	Contextual.Module = argc > 0 ? argv[0] : "runtime";
+    if (!load_program())
+        return 0;
+
 	ProgramConfig Config;
 	Config.Libraries = { {{BUILDER_CONFIG_LIBRARIES}} };
 	Config.Functions = { {{BUILDER_CONFIG_FUNCTIONS}} };
@@ -66,23 +81,18 @@ int main(int argc, char* argv[])
 	Config.Remotes = {{BUILDER_CONFIG_REMOTES}};
 	Config.Translator = {{BUILDER_CONFIG_TRANSLATOR}};
 	Config.EssentialsOnly = {{BUILDER_CONFIG_ESSENTIALS_ONLY}};
-    OS::Directory::SetWorking(Contextual.Path.c_str());
-    signal(SIGINT, &stop);
-    signal(SIGTERM, &stop);
-#ifdef VI_UNIX
-    signal(SIGPIPE, SIG_IGN);
-    signal(SIGCHLD, SIG_IGN);
-#endif
+    setup_program(Contextual);
+
 	Mavi::Initialize(Config.EssentialsOnly ? (size_t)Mavi::Preset::App : (size_t)Mavi::Preset::Game);
 	{
 		VM = new VirtualMachine();
 		Unit = VM->CreateCompiler();
         Context = VM->RequestContext();
-
 		Queue = Schedule::Get();
 		Queue->SetImmediate(true);
 		Multiplexer::Create();
 
+        Vector<std::pair<uint32_t, size_t>> Settings = { {{BUILDER_CONFIG_SETTINGS}} };
         for (auto& Item : Settings)
             VM->SetProperty((Features)Item.first, Item.second);
 
@@ -107,6 +117,7 @@ int main(int argc, char* argv[])
 			goto FinishProgram;
 		}
 
+	    ProgramEntrypoint Entrypoint;
 		Function Main = GetEntrypoint(Contextual, Entrypoint, Unit);
 		if (!Main.IsValid())
         {
@@ -138,6 +149,7 @@ FinishProgram:
 	VI_RELEASE(Context);
 	VI_RELEASE(Unit);
 	VI_RELEASE(VM);
+	VI_RELEASE(Queue);
 	Mavi::Uninitialize();
 	return ExitCode;
 }
