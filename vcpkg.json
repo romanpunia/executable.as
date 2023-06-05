@@ -1,5 +1,5 @@
 {
-    "name": "physics",
+    "name": "{{BUILDER_OUTPUT}}",
     "description": "AngelScript program template to be compiled to an executable",
     "version": "1.0.0",
     "dependencies": [
