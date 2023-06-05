@@ -1,26 +1,8 @@
 cmake_minimum_required(VERSION 3.6)
 set(VI_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/deps/mavi.as/deps/mavi CACHE STRING "-")
-set(VI_BINDINGS ON CACHE BOOL "-")
-set(VI_BACKTRACE ON CACHE BOOL "-")
-set(VI_ALLOCATOR OFF CACHE BOOL "-")
-set(VI_FCTX ON CACHE BOOL "-")
-set(VI_SIMD OFF CACHE BOOL "-")
-set(VI_ASSIMP ON CACHE BOOL "-")
-set(VI_FREETYPE ON CACHE BOOL "-")
-set(VI_GLEW ON CACHE BOOL "-")
-set(VI_OPENAL ON CACHE BOOL "-")
-set(VI_OPENGL ON CACHE BOOL "-")
-set(VI_OPENSSL ON CACHE BOOL "-")
-set(VI_ZLIB ON CACHE BOOL "-")
-set(VI_SDL2 ON CACHE BOOL "-")
-set(VI_POSTGRESQL OFF CACHE BOOL "-")
-set(VI_MONGOC OFF CACHE BOOL "-")
-set(VI_SPIRV ON CACHE BOOL "-")
-set(VI_BULLET3 ON CACHE BOOL "-")
-set(VI_RMLUI ON CACHE BOOL "-")
-set(VI_SHADERS ON CACHE BOOL "-")
+{{BUILDER_FEATURES}}
 include(${VI_DIRECTORY}/lib/toolchain.cmake)
-project(physics)
+project({{BUILDER_OUTPUT}})
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR}/bin)
@@ -55,12 +37,12 @@ string(APPEND BUFFER_DATA "\t}\n}\n#endif")
 file(WRITE ${BUFFER_OUT}.hpp "${BUFFER_DATA}")	
 list(APPEND SOURCE "${BUFFER_OUT}.hpp")
 message(STATUS "Program bytecode hex was written to: ${BUFFER_OUT}.hpp")
-add_executable(physics
+add_executable({{BUILDER_OUTPUT}}
     ${CMAKE_CURRENT_SOURCE_DIR}/deps/mavi.as/src/runtime.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/program.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
-set_target_properties(physics PROPERTIES
-		OUTPUT_NAME "physics"
+set_target_properties({{BUILDER_OUTPUT}} PROPERTIES
+		OUTPUT_NAME "{{BUILDER_OUTPUT}}"
 		CXX_STANDARD ${VI_CXX}
         CXX_STANDARD_REQUIRED ON
 		CXX_EXTENSIONS OFF
@@ -71,5 +53,5 @@ if (MSVC)
 endif()
 add_subdirectory(${VI_DIRECTORY} mavi)
 link_directories(${VI_DIRECTORY})
-target_include_directories(physics PRIVATE ${VI_DIRECTORY})
-target_link_libraries(physics PRIVATE mavi)
+target_include_directories({{BUILDER_OUTPUT}} PRIVATE ${VI_DIRECTORY})
+target_link_libraries({{BUILDER_OUTPUT}} PRIVATE mavi)

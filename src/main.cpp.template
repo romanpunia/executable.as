@@ -71,16 +71,16 @@ int main(int argc, char* argv[])
         return 0;
 
 	ProgramConfig Config;
-	Config.Libraries = {  };
-	Config.Functions = {  };
-	Config.SystemAddons = { "std/ctypes", "std/gui/model", "std/physics", "std/array", "std/gui/control", "std/variant", "std/math", "std/engine", "std/shapes", "std/graphics", "std/string", "std/dictionary", "std/vertices", "std/vm", "std/decimal", "std/schema", "std/clock_timer", "std/file_system", "std/key_frames", "std/vectors", "std/geometric", "std/audio", "std/activity", "std/gui/context", "std/components", "std/renderers",  };
-	Config.CLibraries = true;
-	Config.CFunctions = true;
-	Config.Addons = true;
-	Config.Files = true;
-	Config.Remotes = true;
-	Config.Translator = false;
-	Config.EssentialsOnly = true;
+	Config.Libraries = { {{BUILDER_CONFIG_LIBRARIES}} };
+	Config.Functions = { {{BUILDER_CONFIG_FUNCTIONS}} };
+	Config.SystemAddons = { {{BUILDER_CONFIG_ADDONS}} };
+	Config.CLibraries = {{BUILDER_CONFIG_CLIBRARIES}};
+	Config.CFunctions = {{BUILDER_CONFIG_CFUNCTIONS}};
+	Config.Addons = {{BUILDER_CONFIG_SYSTEM_ADDONS}};
+	Config.Files = {{BUILDER_CONFIG_FILES}};
+	Config.Remotes = {{BUILDER_CONFIG_REMOTES}};
+	Config.Translator = {{BUILDER_CONFIG_TRANSLATOR}};
+	Config.EssentialsOnly = {{BUILDER_CONFIG_ESSENTIALS_ONLY}};
     setup_program(Contextual);
 
 	Mavi::Initialize(Config.EssentialsOnly ? (size_t)Mavi::Preset::App : (size_t)Mavi::Preset::Game);
@@ -92,7 +92,7 @@ int main(int argc, char* argv[])
 		Queue->SetImmediate(true);
 		Multiplexer::Create();
 
-        Vector<std::pair<uint32_t, size_t>> Settings = { { (uint32_t)30, (size_t)10 }, { (uint32_t)29, (size_t)4096 }, { (uint32_t)17, (size_t)0 }, { (uint32_t)31, (size_t)0 }, { (uint32_t)4, (size_t)0 }, { (uint32_t)18, (size_t)0 }, { (uint32_t)13, (size_t)0 }, { (uint32_t)19, (size_t)1 }, { (uint32_t)21, (size_t)0 }, { (uint32_t)11, (size_t)1 }, { (uint32_t)25, (size_t)0 }, { (uint32_t)12, (size_t)0 }, { (uint32_t)27, (size_t)100 }, { (uint32_t)1, (size_t)0 }, { (uint32_t)24, (size_t)0 }, { (uint32_t)14, (size_t)3 }, { (uint32_t)2, (size_t)1 }, { (uint32_t)3, (size_t)1 }, { (uint32_t)5, (size_t)1 }, { (uint32_t)33, (size_t)0 }, { (uint32_t)15, (size_t)0 }, { (uint32_t)6, (size_t)0 }, { (uint32_t)7, (size_t)0 }, { (uint32_t)8, (size_t)0 }, { (uint32_t)9, (size_t)1 }, { (uint32_t)10, (size_t)0 }, { (uint32_t)16, (size_t)1 }, { (uint32_t)20, (size_t)0 }, { (uint32_t)22, (size_t)0 }, { (uint32_t)23, (size_t)1 }, { (uint32_t)26, (size_t)1 }, { (uint32_t)28, (size_t)1 }, { (uint32_t)32, (size_t)0 },  };
+        Vector<std::pair<uint32_t, size_t>> Settings = { {{BUILDER_CONFIG_SETTINGS}} };
         for (auto& Item : Settings)
             VM->SetProperty((Features)Item.first, Item.second);
 
