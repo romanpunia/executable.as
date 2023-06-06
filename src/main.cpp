@@ -2,7 +2,6 @@
 #include "program.hpp"
 #include <signal.h>
 
-Function Terminate = nullptr;
 VirtualMachine* VM = nullptr;
 Compiler* Unit = nullptr;
 ImmediateContext* Context = nullptr;
@@ -14,11 +13,8 @@ void exit_program(int sigv)
 	if (sigv != SIGINT && sigv != SIGTERM)
         return;
     {
-        if (Terminate.IsValid() && FunctionDelegate(Terminate, Context)(nullptr).Get() == 0)
-        {
-            Terminate = nullptr;
+        if (TryContextExit(Contextual, sigv))
             goto GracefulShutdown;
-        }
 
         auto* App = Application::Get();
         if (App != nullptr && App->GetState() == ApplicationState::Active)
@@ -130,7 +126,6 @@ int main(int argc, char* argv[])
 			if (!Context->WillExceptionBeCaught())
 				std::exit(JUMP_CODE + EXIT_RUNTIME_FAILURE);
 		});
-		Terminate = Unit->GetModule().GetFunctionByDecl(Entrypoint.Terminate);
 
 		TypeInfo Type = VM->GetTypeInfoByDecl("array<string>@");
 		Bindings::Array* ArgsArray = Type.IsValid() ? Bindings::Array::Compose<String>(Type.GetTypeInfo(), Contextual.Args) : nullptr;
