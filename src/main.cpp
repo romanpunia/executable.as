@@ -13,7 +13,7 @@ void exit_program(int sigv)
 	if (sigv != SIGINT && sigv != SIGTERM)
         return;
     {
-        if (TryContextExit(Contextual, sigv))
+        if (TryContextExit(ProgramContext::Get(), sigv))
             goto GracefulShutdown;
 
         auto* App = Application::Get();
