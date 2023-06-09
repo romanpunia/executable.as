@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
 	Config.EssentialsOnly = {{BUILDER_CONFIG_ESSENTIALS_ONLY}};
     setup_program(Contextual);
 
-	Mavi::Runtime Lib(Config.EssentialsOnly ? (size_t)Mavi::Preset::App : (size_t)Mavi::Preset::Game);
+	Mavi::Runtime Scope(Config.EssentialsOnly ? (size_t)Mavi::Preset::App : (size_t)Mavi::Preset::Game);
 	{
 		VM = new VirtualMachine();
 		Unit = VM->CreateCompiler();
