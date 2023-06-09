@@ -79,15 +79,14 @@ int main(int argc, char* argv[])
 	Config.EssentialsOnly = {{BUILDER_CONFIG_ESSENTIALS_ONLY}};
     setup_program(Contextual);
 
-	Mavi::Initialize(Config.EssentialsOnly ? (size_t)Mavi::Preset::App : (size_t)Mavi::Preset::Game);
+	Mavi::Runtime Lib(Config.EssentialsOnly ? (size_t)Mavi::Preset::App : (size_t)Mavi::Preset::Game);
 	{
 		VM = new VirtualMachine();
 		Unit = VM->CreateCompiler();
         Context = VM->RequestContext();
 		Queue = Schedule::Get();
 		Queue->SetImmediate(true);
-		Multiplexer::Create();
-
+		
         Vector<std::pair<uint32_t, size_t>> Settings = { {{BUILDER_CONFIG_SETTINGS}} };
         for (auto& Item : Settings)
             VM->SetProperty((Features)Item.first, Item.second);
@@ -145,6 +144,5 @@ FinishProgram:
 	VI_RELEASE(Unit);
 	VI_RELEASE(VM);
 	VI_RELEASE(Queue);
-	Mavi::Uninitialize();
 	return ExitCode;
 }
