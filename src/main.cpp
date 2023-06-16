@@ -61,7 +61,7 @@ bool load_program(ProgramContext& Contextual)
 int main(int argc, char* argv[])
 {
 	ProgramContext Contextual(argc, argv);
-	Contextual.Path = OS::Directory::GetModule();
+	Contextual.Path = *OS::Directory::GetModule();
 	Contextual.Module = argc > 0 ? argv[0] : "runtime";
     if (!load_program(Contextual))
         return 0;
@@ -96,7 +96,7 @@ int main(int argc, char* argv[])
 			goto FinishProgram;
 
 		Unit = VM->CreateCompiler();
-		if (Unit->Prepare(Contextual.Module) < 0)
+		if (!Unit->Prepare(Contextual.Module))
 		{
 			VI_ERR("cannot prepare <%s> module scope", Contextual.Module);
 			ExitCode = JUMP_CODE + EXIT_PREPARE_FAILURE;
@@ -105,7 +105,7 @@ int main(int argc, char* argv[])
 
 		ByteCodeInfo Info;
 		Info.Data.insert(Info.Data.begin(), Contextual.Program.begin(), Contextual.Program.end());
-		if (Unit->LoadByteCode(&Info).Get() < 0)
+		if (!Unit->LoadByteCode(&Info).Get())
 		{
 			VI_ERR("cannot load <%s> module bytecode", Contextual.Module);
 			ExitCode = JUMP_CODE + EXIT_LOADING_FAILURE;
