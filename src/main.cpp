@@ -2,6 +2,7 @@
 #include "program.hpp"
 #include <signal.h>
 
+EventLoop* Loop = nullptr;
 VirtualMachine* VM = nullptr;
 Compiler* Unit = nullptr;
 ImmediateContext* Context = nullptr;
@@ -14,12 +15,16 @@ void exit_program(int sigv)
         return;
     {
         if (TryContextExit(ProgramContext::Get(), sigv))
+        {
+			Loop->Wakeup();
             goto GracefulShutdown;
+        }
 
         auto* App = Application::Get();
         if (App != nullptr && App->GetState() == ApplicationState::Active)
         {
             App->Stop();
+			Loop->Wakeup();
             goto GracefulShutdown;
         }
 
@@ -27,6 +32,7 @@ void exit_program(int sigv)
         if (Queue->IsActive())
         {
             Queue->Stop();
+			Loop->Wakeup();
             goto GracefulShutdown;
         }
 
@@ -120,29 +126,36 @@ int main(int argc, char* argv[])
 			goto FinishProgram;
         }
 
-		Context->SetExceptionCallback([](ImmediateContext* Context)
+		int ExitCode = 0;
+		TypeInfo Type = VM->GetTypeInfoByDecl("array<string>@");
+		Bindings::Array* ArgsArray = Type.IsValid() ? Bindings::Array::Compose<String>(Type.GetTypeInfo(), Contextual.Args) : nullptr;
+		VM->SetExceptionCallback([](ImmediateContext* Context)
 		{
 			if (!Context->WillExceptionBeCaught())
 				std::exit(JUMP_CODE + EXIT_RUNTIME_FAILURE);
 		});
 
-		TypeInfo Type = VM->GetTypeInfoByDecl("array<string>@");
-		Bindings::Array* ArgsArray = Type.IsValid() ? Bindings::Array::Compose<String>(Type.GetTypeInfo(), Contextual.Args) : nullptr;
-		Context->ExecuteCall(Main, [&Main, ArgsArray](ImmediateContext* Context)
+		Main.AddRef();
+		Loop = new EventLoop();
+		Loop->Listen(Context);
+		Loop->Enqueue(FunctionDelegate(Main, Context), [&Main, ArgsArray](ImmediateContext* Context)
 		{
 			if (Main.GetArgsCount() > 0)
 				Context->SetArgObject(0, ArgsArray);
-		}).Wait();
-
-		int ExitCode = Main.GetReturnTypeId() == (int)TypeId::VOIDF ? 0 : (int)Context->GetReturnDWord();
-        if (ArgsArray != nullptr)
-    		VM->ReleaseObject(ArgsArray, Type);
-    	AwaitContext(Queue, VM, Context);
+		}, [&ExitCode, &Type, &Main, ArgsArray](ImmediateContext* Context)
+		{
+			ExitCode = Main.GetReturnTypeId() == (int)TypeId::VOIDF ? 0 : (int)Context->GetReturnDWord();
+			if (ArgsArray != nullptr)
+				Context->GetVM()->ReleaseObject(ArgsArray, Type);
+		});
+        
+		AwaitContext(Queue, Loop, VM, Context);
 	}
 FinishProgram:
 	VI_RELEASE(Context);
 	VI_RELEASE(Unit);
 	VI_RELEASE(VM);
+    VI_RELEASE(Loop);
 	VI_RELEASE(Queue);
 	return ExitCode;
 }
