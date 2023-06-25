@@ -97,11 +97,11 @@ int main(int argc, char* argv[])
         for (auto& Item : Settings)
             VM->SetProperty((Features)Item.first, Item.second);
 
-		ExitCode = ConfigureEngine(Config, Contextual, VM);
+		Unit = VM->CreateCompiler();
+		ExitCode = ConfigureEngine(Config, Contextual, VM, Unit);
 		if (ExitCode != 0)
 			goto FinishProgram;
 
-		Unit = VM->CreateCompiler();
 		if (!Unit->Prepare(Contextual.Module))
 		{
 			VI_ERR("cannot prepare <%s> module scope", Contextual.Module);
